@@ -1,8 +1,8 @@
 import getProvider from "../../helpers/getProvider";
 import assert from "assert";
 import { Quantity } from "@ganache/utils";
-import EthereumProvider from "../../../src/provider";
-import { TypedRpcTransaction } from "@ganache/ethereum-transaction";
+import { EthereumProvider } from "../../../src/provider";
+import { Transaction } from "@ganache/ethereum-transaction";
 
 function between(x: number, min: number, max: number) {
   return x >= min && x <= max;
@@ -174,7 +174,7 @@ describe("api", () => {
           { from, to: address, value: "0xffffffffffffffff" }
         ]);
         await provider.once("message");
-        const tx: TypedRpcTransaction = { from: address };
+        const tx: Transaction = { from: address };
         // account is unknown on startup
         await assert.rejects(provider.send("eth_sendTransaction", [tx]), {
           message: "sender account not recognized"
@@ -229,7 +229,7 @@ describe("api", () => {
 
       it("should remove an account from the personal namespace", async () => {
         const [address] = await provider.send("eth_accounts");
-        const tx: TypedRpcTransaction = { from: address };
+        const tx: Transaction = { from: address };
 
         // account is known on startup
         await assert.doesNotReject(provider.send("eth_sendTransaction", [tx]));

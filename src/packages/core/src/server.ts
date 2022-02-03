@@ -36,7 +36,7 @@ import {
   ConnectorsByName,
   DefaultFlavor,
   FlavorName,
-  Options
+  FlavorOptions
 } from "@ganache/flavors";
 import ConnectorLoader from "./connector-loader";
 import WebsocketServer, { WebSocketCapableFlavor } from "./servers/ws-server";
@@ -108,20 +108,20 @@ export const _DefaultServerOptions = serverDefaults;
  * @public
  */
 export class Server<
-  T extends FlavorName = typeof DefaultFlavor
-> extends Emittery<{ open: undefined; close: undefined }> {
+  Flavor extends FlavorName = typeof DefaultFlavor
+  > extends Emittery<{ open: undefined; close: undefined }> {
   #options: InternalOptions;
-  #providerOptions: Options<T>;
+  #providerOptions: FlavorOptions<Flavor>;
   #status: number = ServerStatus.unknown;
   #app: TemplatedApp | null = null;
   #httpServer: HttpServer | null = null;
   #listenSocket: us_listen_socket | null = null;
-  #connector: ConnectorsByName[T];
+  #connector: ConnectorsByName[Flavor];
   #websocketServer: WebsocketServer | null = null;
 
   #initializer: Promise<[void, void]>;
 
-  public get provider(): ConnectorsByName[T]["provider"] {
+  public get provider(): ConnectorsByName[Flavor]["provider"] {
     return this.#connector.provider;
   }
 
@@ -130,9 +130,9 @@ export class Server<
   }
 
   constructor(
-    providerAndServerOptions: ServerOptions<T> = {
+    providerAndServerOptions: ServerOptions<Flavor> = {
       flavor: DefaultFlavor
-    } as ServerOptions<T>
+    } as ServerOptions<Flavor>
   ) {
     super();
     this.#options = serverOptionsConfig.normalize(providerAndServerOptions);
@@ -213,12 +213,12 @@ export class Server<
           // https://github.com/uNetworking/uSockets/commit/04295b9730a4d413895fa3b151a7337797dcb91f#diff-79a34a07b0945668e00f805838601c11R51
           const LIBUS_LISTEN_EXCLUSIVE_PORT = 1;
           hostname
-            ? (this.#app as any).listen(
-                hostname,
-                port,
-                LIBUS_LISTEN_EXCLUSIVE_PORT,
-                resolve
-              )
+            ? this.#app.listen(
+              hostname,
+              port,
+              LIBUS_LISTEN_EXCLUSIVE_PORT,
+              resolve
+            )
             : this.#app.listen(port, LIBUS_LISTEN_EXCLUSIVE_PORT, resolve);
         }
       ).then(listenSocket => {
@@ -228,8 +228,7 @@ export class Server<
         } else {
           this.#status = ServerStatus.closed;
           const err = new Error(
-            `listen EADDRINUSE: address already in use ${
-              hostname || DEFAULT_HOST
+            `listen EADDRINUSE: address already in use ${hostname || DEFAULT_HOST
             }:${port}.`
           );
           throw err;
